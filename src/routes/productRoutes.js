@@ -7,7 +7,7 @@ const {
   updateProduct,
   deleteProduct,
   getProductsByKategori
-} = require('..productController.js');
+} = require('../controller/productCOntroller');
 const { validateProduct } = require('../middleware/validator');
 
 // Routes untuk /api/products
