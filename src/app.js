@@ -25,7 +25,7 @@ app.get('/', (req, res) => {
   res.json({
     message: '🛍️ Welcome to Preloved API',
     version: '1.0.0',
-    author: 'Your Name',
+    author: 'Dunnow Ganteng',
     endpoints: {
       products: '/api/products',
       getAllProducts: 'GET /api/products',
