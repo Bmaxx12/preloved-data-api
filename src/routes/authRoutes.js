@@ -8,10 +8,11 @@ const {
   updatePassword
 } = require('../controller/authController');
 const { protect } = require('../middleware/auth');
+const { validateRegister, validateLogin } = require('../middleware/validator');
 
 // Public routes
-router.post('/register', register);
-router.post('/login', login);
+router.post('/register', validateRegister, register);
+router.post('/login', validateLogin, login);
 
 // Private routes (butuh authentication)
 router.get('/me', protect, getMe);
