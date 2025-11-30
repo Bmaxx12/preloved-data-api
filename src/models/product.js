@@ -1,6 +1,12 @@
 const mongoose = require('mongoose');
 
 const productSchema = new mongoose.Schema({
+  // Relasi ke User
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: [true, 'User ID wajib diisi']
+  },
   nama_barang: {
     type: String,
     required: [true, 'Nama barang wajib diisi'],
@@ -63,28 +69,35 @@ const productSchema = new mongoose.Schema({
     type: String,
     required: [true, 'Link gambar wajib diisi'],
     trim: true
+  },
+  status: {
+    type: String,
+    enum: ['available', 'sold', 'reserved'],
+    default: 'available'
   }
 }, {
-  timestamps: true // Menambahkan createdAt dan updatedAt otomatis
+  timestamps: true
 });
 
 // Index untuk mempercepat pencarian
 productSchema.index({ nama_barang: 'text', deskripsi: 'text', brand: 'text' });
 productSchema.index({ kategori: 1 });
 productSchema.index({ brand: 1 });
+productSchema.index({ userId: 1 });
 productSchema.index({ createdAt: -1 });
 
-// Virtual untuk format harga (opsional)
+// Virtual untuk format harga
 productSchema.virtual('harga_numeric').get(function() {
   return this.harga.replace(/[^0-9]/g, '');
 });
 
-// Method untuk mencari produk serupa (opsional)
-productSchema.methods.findSimilarProducts = function() {
-  return this.model('Product').find({
-    kategori: this.kategori,
-    _id: { $ne: this._id }
-  }).limit(5);
-};
+// Populate user info saat query
+productSchema.pre(/^find/, function(next) {
+  this.populate({
+    path: 'userId',
+    select: 'name email phone avatar'
+  });
+  next();
+});
 
 module.exports = mongoose.model('Product', productSchema);

@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const connectDB = require('./config/database');
 const productRoutes = require('./routes/productRoutes');
+const authRoutes = require('./routes/authRoutes');
 const { errorHandler } = require('./middleware/errorHandler');
 
 const app = express();
@@ -24,21 +25,31 @@ app.use((req, res, next) => {
 app.get('/', (req, res) => {
   res.json({
     message: '🛍️ Welcome to Preloved API',
-    version: '1.0.0',
-    author: 'Dunnow Ganteng',
+    version: '2.0.0',
+    author: 'Your Name',
     endpoints: {
-      products: '/api/products',
+      // Auth endpoints
+      register: 'POST /api/auth/register',
+      login: 'POST /api/auth/login',
+      getProfile: 'GET /api/auth/me (Private)',
+      updateProfile: 'PUT /api/auth/updateprofile (Private)',
+      updatePassword: 'PUT /api/auth/updatepassword (Private)',
+      
+      // Product endpoints
       getAllProducts: 'GET /api/products',
       getProduct: 'GET /api/products/:id',
-      createProduct: 'POST /api/products',
-      updateProduct: 'PUT /api/products/:id',
-      deleteProduct: 'DELETE /api/products/:id'
+      getMyProducts: 'GET /api/products/my/products (Private)',
+      getUserProducts: 'GET /api/products/user/:userId',
+      createProduct: 'POST /api/products (Private)',
+      updateProduct: 'PUT /api/products/:id (Private)',
+      deleteProduct: 'DELETE /api/products/:id (Private)'
     },
     documentation: 'See README.md for detailed documentation'
   });
 });
 
 // API Routes
+app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
 
 // 404 Handler

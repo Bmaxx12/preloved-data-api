@@ -42,7 +42,7 @@ exports.getAllProducts = async (req, res, next) => {
     } else if (sort === 'name_desc') {
       sortOption = { nama_barang: -1 };
     } else {
-      sortOption = { createdAt: -1 }; // Default: terbaru
+      sortOption = { createdAt: -1 };
     }
 
     // Pagination
@@ -103,9 +103,22 @@ exports.getProductById = async (req, res, next) => {
 
 // @desc    Tambah produk baru
 // @route   POST /api/products
-// @access  Public (bisa diubah jadi Private dengan auth)
+// @access  Private (butuh login)
 exports.createProduct = async (req, res, next) => {
   try {
+    // Tambahkan userId dari user yang login
+    req.body.userId = req.user.id;
+    
+    // Gunakan kontak dari user yang login jika tidak disediakan
+    if (!req.body.kontak_penjual) {
+      req.body.kontak_penjual = req.user.phone;
+    }
+    
+    // Gunakan lokasi dari user yang login jika tidak disediakan
+    if (!req.body.lokasi) {
+      req.body.lokasi = req.user.address || 'Jakarta';
+    }
+
     const product = await Product.create(req.body);
 
     res.status(201).json({
@@ -120,7 +133,7 @@ exports.createProduct = async (req, res, next) => {
 
 // @desc    Update produk
 // @route   PUT /api/products/:id
-// @access  Public (bisa diubah jadi Private dengan auth)
+// @access  Private (hanya owner produk atau admin)
 exports.updateProduct = async (req, res, next) => {
   try {
     let product = await Product.findById(req.params.id);
@@ -132,12 +145,23 @@ exports.updateProduct = async (req, res, next) => {
       });
     }
 
+    // Cek ownership - hanya owner atau admin yang bisa update
+    if (product.userId.toString() !== req.user.id && req.user.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Anda tidak memiliki akses untuk mengupdate produk ini'
+      });
+    }
+
+    // Jangan biarkan user mengubah userId
+    delete req.body.userId;
+
     product = await Product.findByIdAndUpdate(
       req.params.id,
       req.body,
       {
-        new: true, // Return document setelah update
-        runValidators: true // Jalankan validasi schema
+        new: true,
+        runValidators: true
       }
     );
 
@@ -153,7 +177,7 @@ exports.updateProduct = async (req, res, next) => {
 
 // @desc    Hapus produk
 // @route   DELETE /api/products/:id
-// @access  Public (bisa diubah jadi Private dengan auth)
+// @access  Private (hanya owner produk atau admin)
 exports.deleteProduct = async (req, res, next) => {
   try {
     const product = await Product.findById(req.params.id);
@@ -162,6 +186,14 @@ exports.deleteProduct = async (req, res, next) => {
       return res.status(404).json({
         success: false,
         message: 'Produk tidak ditemukan'
+      });
+    }
+
+    // Cek ownership - hanya owner atau admin yang bisa delete
+    if (product.userId.toString() !== req.user.id && req.user.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Anda tidak memiliki akses untuk menghapus produk ini'
       });
     }
 
@@ -189,6 +221,42 @@ exports.getProductsByKategori = async (req, res, next) => {
       success: true,
       count: products.length,
       kategori: kategori,
+      data_barang: products
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Get produk milik user yang login
+// @route   GET /api/products/my/products
+// @access  Private
+exports.getMyProducts = async (req, res, next) => {
+  try {
+    const products = await Product.find({ userId: req.user.id })
+      .sort({ createdAt: -1 });
+
+    res.json({
+      success: true,
+      count: products.length,
+      data_barang: products
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Get produk berdasarkan user ID
+// @route   GET /api/products/user/:userId
+// @access  Public
+exports.getProductsByUserId = async (req, res, next) => {
+  try {
+    const products = await Product.find({ userId: req.params.userId })
+      .sort({ createdAt: -1 });
+
+    res.json({
+      success: true,
+      count: products.length,
       data_barang: products
     });
   } catch (error) {

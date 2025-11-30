@@ -6,21 +6,23 @@ const {
   createProduct,
   updateProduct,
   deleteProduct,
-  getProductsByKategori
+  getProductsByKategori,
+  getMyProducts,
+  getProductsByUserId
 } = require('../controller/productCOntroller');
+const { protect, authorize } = require('../middleware/auth');
 const { validateProduct } = require('../middleware/validator');
 
-// Routes untuk /api/products
-router.route('/')
-  .get(getAllProducts)          // GET semua produk
-  .post(validateProduct, createProduct);  // POST produk baru
-
-// Route khusus untuk kategori (daftarkan sebelum route dynamic '/:id')
+// Public routes
+router.get('/', getAllProducts);
 router.get('/kategori/:kategori', getProductsByKategori);
+router.get('/user/:userId', getProductsByUserId);
+router.get('/:id', getProductById);
 
-router.route('/:id')
-  .get(getProductById)          // GET produk by ID
-  .put(validateProduct, updateProduct)    // PUT update produk
-  .delete(deleteProduct);       // DELETE produk
+// Private routes (butuh login)
+router.post('/', protect, validateProduct, createProduct);
+router.get('/my/products', protect, getMyProducts); // Harus di atas /:id
+router.put('/:id', protect, validateProduct, updateProduct);
+router.delete('/:id', protect, deleteProduct);
 
 module.exports = router;
