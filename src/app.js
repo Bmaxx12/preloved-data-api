@@ -26,7 +26,7 @@ app.get('/', (req, res) => {
   res.json({
     message: '🛍️ Welcome to Preloved API',
     version: '2.0.0',
-    author: 'Your Name',
+    author: 'Dunnow oi',
     endpoints: {
       // Auth endpoints
       register: 'POST /api/auth/register',
